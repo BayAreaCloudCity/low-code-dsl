@@ -1,13 +1,15 @@
 import os
 from datetime import datetime
 from typing import Optional
+import requests
 
 import anaximander as nx
 
 
 def get_request(func):
-    def wrapper():
-        pass # send out a get request and return
+    def wrapper(*args, **kwargs):
+        requests.get(kwargs.url)
+        pass  # send out a get request and return
 
 
 class City(nx.Entity):
@@ -35,9 +37,10 @@ class Weather(nx.Sample):
     @get_request
     def from_source(city: City):
         return f"https://api.openweathermap.org/data/2.5/weather?lat={city.lat}&lon={city.lon}&appid={os.environ['API_KEY']}"
-    
+
 
 MINUTE = 60 * 60
+
 
 class WeatherJournal(nx.Journal):
     city_id: int = nx.key()
@@ -48,6 +51,9 @@ class WeatherJournal(nx.Journal):
     def from_sample(self, weatherlist, timestamp):
         for weather in sorted(weatherlist):
             if weather.timestamp <= timestamp + 5 * MINUTE and \
-                weather.timestamp >= timestamp - 5 * MINUTE:
+                    weather.timestamp >= timestamp - 5 * MINUTE:
                 self.visibility = weather.visibility
                 self.condition = weather.visibility
+
+    def to_warehouse(self):
+        pass
