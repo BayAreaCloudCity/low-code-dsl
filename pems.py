@@ -1,6 +1,4 @@
 from datetime import datetime
-from typing import Optional
-
 import anaximander as nx
 
 
@@ -27,29 +25,31 @@ class PeMSSample(nx.Sample):
     timestamp: datetime = nx.timestamp()
     average_speed: Speed = nx.data(ge=0)
     total_flow: Flow = nx.data(ge=0)
+    BASE_URL = "https://pems.dot.ca.gov"
+
+    @scheduler("1d")
+    def from_link_source(cls):
+        """
+        same as collect_pems
+        """
+
 
 MINUTE = 60 * 60
 
-class PeMSJournal(nx.Journal):
-    city_id: int = nx.key()
-    timestamp: datetime = nx.timestamp()
-    average_speed: Speed = nx.data(ge=0)
-    total_flow: Flow = nx.data(ge=0)
-
-    def from_sample(self, pemslist, timestamp):
-        for pems in sorted(pemslist):
-            if pems.timestamp <= timestamp + 5 * MINUTE and \
-                pems.timestamp >= timestamp - 5 * MINUTE:
-                self.average_speed = pems.average_speed
-                self.total_flow = pems.total_flow
 
 class SegmentPeMsJournal(nx.Journal):
     segment_id: int = nx.key()
     timestamp: datetime = nx.timestamp()
-    average_speed: Speed = nx.data(ge=0)
-    total_flow: Flow = nx.data(ge=0)
+    aggregated_speed: Speed = nx.data(ge=0)
 
-    def from_pems_journal(self, pems_journal_list, coefficients):
-        for pems, coef in zip(pems_journal_list, coefficients):
-            self.average_speed += coef * pems.average_speed
-            self.total_flow = coef * pems.total_flow
+    @nx.source
+    def from_sample(cls):
+        PeMSSample.map(
+            __station_to_segment, field="station_id", new_field="segment_ids"
+        ).splitter(field="segment_ids", new_field="segment_id").group_by_key(
+            key="segment_id"
+        ).agg(
+            get_pems_feature
+        ).fixed_windows(
+            window_size, window_period
+        )
