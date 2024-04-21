@@ -1,15 +1,10 @@
 import os
 from datetime import datetime
-from typing import Optional
-import requests
 
 import anaximander as nx
 
-
-def get_request(func):
-    def wrapper(*args, **kwargs):
-        requests.get(kwargs.url)
-        pass  # send out a get request and return
+MINUTE = 60 * 60
+BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 
 class City(nx.Entity):
@@ -24,36 +19,27 @@ class Visibility(nx.Measurement):
     ge = 0
 
 
-class Condition(nx.Measurement):
-    pass
-
-
-class Weather(nx.Sample):
+class WeatherSample(nx.Sample):
     city_id: int = nx.key()
     timestamp: datetime = nx.timestamp()
     visibility: Visibility = nx.data(ge=0)
-    condition: Condition = nx.data()
 
+    @nx.source
+    @scheduler("5m")
     @get_request
+    @authentication(url_params={"appid": os.environ['API_KEY']})
     def from_source(city: City):
-        return f"https://api.openweathermap.org/data/2.5/weather?lat={city.lat}&lon={city.lon}&appid={os.environ['API_KEY']}"
-
-
-MINUTE = 60 * 60
+        return f"{BASE_URL}?lat={city.lat}&lon={city.lon}"
 
 
 class WeatherJournal(nx.Journal):
     city_id: int = nx.key()
     timestamp: datetime = nx.timestamp()
     visibility: Visibility = nx.data()
-    condition: Condition = nx.data()
 
-    def from_sample(self, weatherlist, timestamp):
-        for weather in sorted(weatherlist):
-            if weather.timestamp <= timestamp + 5 * MINUTE and \
-                    weather.timestamp >= timestamp - 5 * MINUTE:
-                self.visibility = weather.visibility
-                self.condition = weather.visibility
-
-    def to_warehouse(self):
-        pass
+    @nx.source
+    def from_sample(self):
+        return (
+            WeatherSample.filter(lambda weather:
+                                 weather.timestamp <= timestamp + 5 * MINUTE and \
+                                 weather.timestamp >= timestamp - 5 * MINUTE))

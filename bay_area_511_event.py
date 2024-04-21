@@ -4,6 +4,7 @@ from typing import Optional
 
 import anaximander as nx
 
+BASE_URL = "https://511.org"
 
 class Event(nx.Entity):
     pass

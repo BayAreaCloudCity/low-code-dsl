@@ -6,10 +6,10 @@ import os
 
 from requests import Session
 
+from config import WINDOW_SIZE, WINDOW_PERIOD
+
 BASE_URL = "https://pems.dot.ca.gov"
 DISTRICT_ID = 4
-WINDOW_SIZE = 900
-WINDOW_PERIOD = 300
 
 
 class PeMSStation(nx.Entity):
@@ -37,6 +37,7 @@ class PeMSSample(nx.Sample):
     total_flow: Flow = nx.data(ge=0)
     BASE_URL = "https://pems.dot.ca.gov"
 
+    @nx.source
     @scheduler("1d")
     @csv
     @authentication(username=os.environ['USERNAME'], password=os.environ['PASSWORD'], url=BASE_URL)
