@@ -1,0 +1,3 @@
+# Low-Code Domain-Specific Language
+
+This project presents pseudocode, written in Python, for a proof of concept aimed at transforming our [predictive analysis application for I-880](https://github.com/Cloud-City-Cal/gcp) into demonstrative examples for potential low-code approaches. This demonstrates that with a low-code framework, individuals without software engineering or cloud infrastructure expertise can create complex data transformations. Since the provided examples are in pseudocode, they cannot be executed. Instead, they serve to illustrate how a low-code approach might be implemented. For more details on our DSL design, including the significance of each function, please refer to our report at [TODO](example.com).
